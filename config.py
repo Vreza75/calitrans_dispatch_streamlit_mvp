@@ -1,43 +1,33 @@
 import os
+import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
 
-SMARTSHEET_ACCESS_TOKEN = os.getenv("SMARTSHEET_ACCESS_TOKEN")
-SMARTSHEET_DISPATCH_SHEET_ID = os.getenv("SMARTSHEET_DISPATCH_SHEET_ID")
+SMARTSHEET_ACCESS_TOKEN = os.getenv("SMARTSHEET_ACCESS_TOKEN") or st.secrets.get("SMARTSHEET_ACCESS_TOKEN")
+SMARTSHEET_DISPATCH_SHEET_ID = os.getenv("SMARTSHEET_DISPATCH_SHEET_ID") or st.secrets.get("SMARTSHEET_DISPATCH_SHEET_ID")
 
-# Update these names to exactly match your Smartsheet columns.
 COLUMN_MAP = {
-    "load_id": "Load#",
+    "load_id": "Load ID",
     "customer": "Customer",
     "pickup": "Pickup",
     "delivery": "Delivery",
     "status": "Status",
     "driver": "Driver",
     "truck": "Truck",
-    "trailer": "Container Number",
     "dispatcher_notes": "Dispatcher Notes",
-    
 }
 
-# Only these columns are allowed to be changed from the app.
 EDITABLE_COLUMNS = [
     "Status",
     "Driver",
     "Truck",
-    "Trailer",
-    "Container Number",
     "Dispatcher Notes",
-    
-    
 ]
 
 ACTIVE_STATUSES = [
-    "Open",
+    "Ready to Dispatch",
     "Assigned",
-    "Dispatched",
-    "In Transit",
-    "At Pickup",
-    "At Delivery",
-    "Hold",
+    "En Route to Pickup",
+    "Hold/Need Info",
 ]
