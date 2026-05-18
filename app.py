@@ -40,25 +40,16 @@ def refresh_data():
     st.cache_data.clear()
 
 
-logo_b64 = image_to_base64("assets/calitrans_logo.png")
-logo_html = (
-    f'<img class="brand-logo" src="data:image/png;base64,{logo_b64}" />'
-    if logo_b64
-    else '<div class="brand-logo"><b>CALITRANS</b></div>'
-)
+banner_b64 = image_to_base64("assets/header_banner.png")
 
-st.markdown(f"""
-<div class="hero">
-  <div class="hero-inner">
-    <div class="brand-row">
-      {logo_html}
+if banner_b64:
+    st.markdown(f"""
+    <div class="banner-wrapper">
+        <img class="header-banner" src="data:image/png;base64,{banner_b64}" />
     </div>
-    <h1>🚚 Calitrans Dispatch Center</h1>
-    <p>Live TMS-style dispatch board powered by Smartsheet</p>
-    <div class="hero-slogan">Movemos su carga,<br>impulsamos a Colombia.</div>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+else:
+    st.error("Header banner not found. Save it as assets/header_banner.png")
 
 
 try:
