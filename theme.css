@@ -243,4 +243,56 @@ footer {visibility: hidden;}
     border: 2px solid #FFD200 !important;
     border-bottom: 4px solid #FFD200 !important;
 }
+/* Banner spacing */
+.banner-wrapper {
+    width: 100%;
+    margin-bottom: 8px;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 35px rgba(6, 27, 58, .20);
+    background: white;
+}
+
+.header-banner {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 18px;
+}
+
+/* Reduce gap after banner */
+div[data-testid="stHorizontalBlock"] {
+    margin-top: 0rem;
+}
+
+/* Tab button borders */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 12px;
+    border-bottom: 2px solid #d9e1ec;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
+    background: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, .05);
+}
+
+.stTabs [aria-selected="true"] {
+    background: #fff8dc !important;
+    color: #003B8E !important;
+    border: 2px solid #FFD200 !important;
+    border-bottom: 4px solid #FFD200 !important;
+}
+/* Pull KPI cards closer to banner */
+.banner-wrapper {
+    margin-bottom: -65px !important;
+}
+
+div[data-testid="stHorizontalBlock"] {
+    margin-top: 0px !important;
+    padding-top: 0px !important;
+}
 </style>
