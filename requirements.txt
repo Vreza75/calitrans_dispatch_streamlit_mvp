@@ -1,5 +1,5 @@
-streamlit==1.35.0
-pandas==2.1.4
-smartsheet-python-sdk==3.0.4
-python-dotenv==1.0.1
-pillow==10.4.0
+streamlit
+pandas
+smartsheet-python-sdk
+python-dotenv
+pillow
