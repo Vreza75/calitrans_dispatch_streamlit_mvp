@@ -223,4 +223,24 @@ footer {visibility: hidden;}
     .brand-logo {width: 130px;}
     .hero-inner {padding: 35px 28px;}
 }
+.stTabs [data-baseweb="tab-list"] {
+    gap: 12px;
+    border-bottom: 2px solid #d9e1ec;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border: 1px solid #dbe3ef;
+    border-radius: 10px 10px 0 0;
+    padding: 10px 16px;
+    background: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, .05);
+}
+
+.stTabs [aria-selected="true"] {
+    background: #fff8dc !important;
+    color: #003B8E !important;
+    border: 2px solid #FFD200 !important;
+    border-bottom: 4px solid #FFD200 !important;
+}
 </style>
