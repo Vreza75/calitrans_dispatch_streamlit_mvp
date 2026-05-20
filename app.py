@@ -75,11 +75,37 @@ if df.empty:
     st.warning("No rows found in the dispatch sheet.")
     st.stop()
 
-required_columns = [
-    "_row_id", "Load ID", "Customer", "Pickup", "Delivery",
-    "Status", "Driver", "Truck", "Dispatcher Notes"
+required_columns = otr_columns = [
+    "Primary",
+    "Booking Number",
+    "Status",
+    "Chassis",
+    "Container Number",
+    "Customer",
+    "Document Cutoff",
+    "Port",
+    "Warehouse",
 ]
-for col in required_columns:
+
+otr_status_options = [
+    "New",
+    "Hold/Need Info",
+    "Ready to Dispatch",
+    "Assigned",
+    "En Route to Pickup",
+    "At Pickup",
+    "Loaded",
+    "En Route To Delivery",
+    "Delivered",
+    "POD Received",
+    "Ready for ProfitTools",
+    "Exported to ProfitTools",
+    "Invoiced",
+    "Closed",
+    "Cancelled",
+    "Returning Empty",
+]
+for col in otr_columns:
     if col not in df.columns:
         df[col] = None
 
@@ -217,10 +243,10 @@ def show_load_table(data: pd.DataFrame, title: str):
 
 tabs = st.tabs([
     "📋 Load Board",
-    "📥 OTR Imports",
-    "📤 OTR Exports",
+    "🚛 OTR Imports",
+    "🚛 OTR Exports",
     "🚛 OTR Local Imports",
-    "📁 Exported Files"
+    "📋 Files to Export"
 ])
 with tabs[0]:
     st.subheader("📋 Dispatch Board")
@@ -246,8 +272,21 @@ with tabs[0]:
         st.write("")
         st.button("🔍 Search", key="dispatch_board_search_btn")
 
-    filtered_df = filter_table(dispatch_board_df, search_text, status_filter)
-    st.dataframe(filtered_df, use_container_width=True)
+    filtered_df = filter_table(df, search_text, status_filter)
+
+    st.data_editor(
+        filtered_df[otr_columns],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+         "Status": st.column_config.SelectboxColumn(
+             "Status",
+                options=otr_status_options,
+            )
+    },
+    disabled=[col for col in otr_columns if col != "Status"],
+    key="otr_imports_editor"
+)
 
 
 with tabs[1]:
@@ -273,10 +312,9 @@ with tabs[1]:
         st.write("")
         st.write("")
         search_button = st.button("🔍 Search", key="otr_import_search_btn")
-
-    filtered_df = filter_table(otr_imports_df, search_text, status_filter)
+    
+    filtered_df = filter_table(df, search_text, status_filter)
     st.dataframe(filtered_df, use_container_width=True)
-
 
 with tabs[2]:
     st.subheader("📤 OTR Exports")
@@ -302,8 +340,21 @@ with tabs[2]:
         st.write("")
         search_button = st.button("🔍 Search", key="otr_export_search_btn")
 
-    filtered_df = filter_table(otr_exports_df, search_text, status_filter)
-    st.dataframe(filtered_df, use_container_width=True)
+    filtered_df = filter_table(df, search_text, status_filter)
+
+    st.data_editor(
+        filtered_df[otr_columns],
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Status": st.column_config.SelectboxColumn(
+                "Status",
+                options=otr_status_options,
+            )
+    },
+    disabled=[col for col in otr_columns if col != "Status"],
+    key="otr_imports_editor"
+)
 
 
 with tabs[3]:
@@ -330,7 +381,7 @@ with tabs[3]:
         st.write("")
         search_button = st.button("🔍 Search", key="otr_local_import_search_btn")
 
-    filtered_df = filter_table(otr_local_imports_df, search_text, status_filter)
+    filtered_df = filter_table(df, search_text, status_filter)
     st.dataframe(filtered_df, use_container_width=True)
 
 
@@ -358,7 +409,7 @@ with tabs[4]:
         st.write("")
         search_button = st.button("🔍 Search", key="exported_files_search_btn")
 
-    filtered_df = filter_table(exported_files_df, search_text, status_filter)
+    filtered_df = filter_table(df, search_text, status_filter)
     st.dataframe(filtered_df, use_container_width=True)
 
 st.markdown("""
