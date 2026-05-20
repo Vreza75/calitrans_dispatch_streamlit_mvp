@@ -7,7 +7,20 @@ from smartsheet_client import DispatchSmartsheetClient
 from validators import validate_dispatch_rows
 from profittools_export import export_ready_loads
 
+def filter_table(df, search_text="", status_filter="All"):
+    filtered = df.copy()
 
+    if status_filter != "All" and "Status" in filtered.columns:
+        filtered = filtered[filtered["Status"] == status_filter]
+
+    if search_text:
+        search_text = search_text.lower()
+        filtered = filtered[
+            filtered.astype(str)
+            .apply(lambda row: row.str.lower().str.contains(search_text).any(), axis=1)
+        ]
+
+    return filtered
 st.set_page_config(
     page_title="Calitrans Dispatch Center",
     page_icon="🚚",
@@ -202,30 +215,151 @@ def show_load_table(data: pd.DataFrame, title: str):
             st.info("No changes detected.")
 
 
-tab_board, tab_ready, tab_problem, tab_export = st.tabs([
+tabs = st.tabs([
     "📋 Load Board",
-    "✅ Ready to Dispatch",
-    "⚠️ Problem Loads",
-    "📤 ProfitTools Export",
+    "📥 OTR Imports",
+    "📤 OTR Exports",
+    "🚛 OTR Local Imports",
+    "📁 Exported Files"
 ])
+with tabs[0]:
+    st.subheader("📋 Load Board")
 
-with tab_board:
-    show_load_table(df, "Load Board")
+    col1, col2, col3 = st.columns([3, 2, 1])
 
-with tab_ready:
-    show_load_table(df[df["Status"] == "Ready to Dispatch"], "Ready to Dispatch")
+    with col1:
+        search_text = st.text_input(
+            "Search Load Board",
+            placeholder="Search Load ID, Customer, Driver, Status...",
+            key="load_board_search"
+        )
 
-with tab_problem:
-    show_load_table(
-        df[df["Status"].isin(["Hold/Need Info", "Problem Load", "Cancelled"])],
-        "Problem Loads",
-    )
+    with col2:
+        status_filter = st.selectbox(
+            "Status",
+            ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold / Need Info", "Exported"],
+            key="load_board_status"
+        )
 
-with tab_export:
-    show_load_table(
-        df[df["Status"] == "Exported to ProfitTools"],
-        "ProfitTools Export",
-    )
+    with col3:
+        st.write("")
+        st.write("")
+        search_button = st.button("🔍 Search", key="load_board_search_btn")
+
+    filtered_df = filter_table(load_board_df, search_text, status_filter)
+    st.dataframe(filtered_df, use_container_width=True)
+
+
+with tabs[1]:
+    st.subheader("📥 OTR Imports")
+
+    col1, col2, col3 = st.columns([3, 2, 1])
+
+    with col1:
+        search_text = st.text_input(
+            "Search OTR Imports",
+            placeholder="Search customer, file name, load ID...",
+            key="otr_import_search"
+        )
+
+    with col2:
+        status_filter = st.selectbox(
+            "Status",
+            ["All", "New", "Ready to Import", "Imported", "Needs Review", "Error", "Duplicate"],
+            key="otr_import_status"
+        )
+
+    with col3:
+        st.write("")
+        st.write("")
+        search_button = st.button("🔍 Search", key="otr_import_search_btn")
+
+    filtered_df = filter_table(otr_imports_df, search_text, status_filter)
+    st.dataframe(filtered_df, use_container_width=True)
+
+
+with tabs[2]:
+    st.subheader("📤 OTR Exports")
+
+    col1, col2, col3 = st.columns([3, 2, 1])
+
+    with col1:
+        search_text = st.text_input(
+            "Search OTR Exports",
+            placeholder="Search export file, customer, status...",
+            key="otr_export_search"
+        )
+
+    with col2:
+        status_filter = st.selectbox(
+            "Status",
+            ["All", "New", "Ready to Export", "Exported", "Failed Export", "Needs Review"],
+            key="otr_export_status"
+        )
+
+    with col3:
+        st.write("")
+        st.write("")
+        search_button = st.button("🔍 Search", key="otr_export_search_btn")
+
+    filtered_df = filter_table(otr_exports_df, search_text, status_filter)
+    st.dataframe(filtered_df, use_container_width=True)
+
+
+with tabs[3]:
+    st.subheader("🚛 OTR Local Imports")
+
+    col1, col2, col3 = st.columns([3, 2, 1])
+
+    with col1:
+        search_text = st.text_input(
+            "Search OTR Local Imports",
+            placeholder="Search local import, customer, load ID...",
+            key="otr_local_import_search"
+        )
+
+    with col2:
+        status_filter = st.selectbox(
+            "Status",
+            ["All", "New", "Ready to Import", "Imported", "Needs Review", "Error"],
+            key="otr_local_import_status"
+        )
+
+    with col3:
+        st.write("")
+        st.write("")
+        search_button = st.button("🔍 Search", key="otr_local_import_search_btn")
+
+    filtered_df = filter_table(otr_local_imports_df, search_text, status_filter)
+    st.dataframe(filtered_df, use_container_width=True)
+
+
+with tabs[4]:
+    st.subheader("📁 Exported Files")
+
+    col1, col2, col3 = st.columns([3, 2, 1])
+
+    with col1:
+        search_text = st.text_input(
+            "Search Exported Files",
+            placeholder="Search file name, date, status...",
+            key="exported_files_search"
+        )
+
+    with col2:
+        status_filter = st.selectbox(
+            "Status",
+            ["All", "Generated", "Sent to ProfitTools", "Sent to QuickBooks", "Failed", "Archived"],
+            key="exported_files_status"
+        )
+
+    with col3:
+        st.write("")
+        st.write("")
+        search_button = st.button("🔍 Search", key="exported_files_search_btn")
+
+    filtered_df = filter_table(exported_files_df, search_text, status_filter)
+    st.dataframe(filtered_df, use_container_width=True)
 
 st.markdown("""
 <div class="footer-band">
