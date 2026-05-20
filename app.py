@@ -223,30 +223,30 @@ tabs = st.tabs([
     "📁 Exported Files"
 ])
 with tabs[0]:
-    st.subheader("📋 Load Board")
+    st.subheader("📋 Dispatch Board")
 
     col1, col2, col3 = st.columns([3, 2, 1])
 
     with col1:
         search_text = st.text_input(
-            "Search Load Board",
+            "Search Dispatch Board",
             placeholder="Search Load ID, Customer, Driver, Status...",
-            key="load_board_search"
+            key="dispatch_board_search"
         )
 
     with col2:
         status_filter = st.selectbox(
             "Status",
             ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold / Need Info", "Exported"],
-            key="load_board_status"
+            key="dispatch_board_status"
         )
 
     with col3:
         st.write("")
         st.write("")
-        search_button = st.button("🔍 Search", key="load_board_search_btn")
+        st.button("🔍 Search", key="dispatch_board_search_btn")
 
-    filtered_df = filter_table(load_board_df, search_text, status_filter)
+    filtered_df = filter_table(dispatch_board_df, search_text, status_filter)
     st.dataframe(filtered_df, use_container_width=True)
 
 
