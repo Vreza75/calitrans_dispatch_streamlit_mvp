@@ -21,6 +21,9 @@ def filter_table(df, search_text="", status_filter="All"):
         ]
 
     return filtered
+def get_type_rows(df, type_name):
+    type_series = df["TYPE"].astype(str).str.strip().str.lower()
+    return df[type_series == type_name.strip().lower()]
 st.set_page_config(
     page_title="Calitrans Dispatch Center",
     page_icon="🚚",
@@ -70,6 +73,27 @@ try:
 except Exception as exc:
     st.error(f"Could not load Smartsheet data: {exc}")
     st.stop()
+
+# Clean up Smartsheet column names and values
+df.columns = df.columns.astype(str).str.strip()
+
+type_col = next((c for c in df.columns if c.strip().lower() == "type"), None)
+
+if type_col is None:
+    st.error(f"TYPE column not found. Columns found: {list(df.columns)}")
+    st.stop()
+
+df["TYPE"] = df[type_col].astype(str).str.strip()
+df["Status"] = df["Status"].astype(str).str.strip()
+
+if df.empty:
+    st.warning("No rows found in the dispatch sheet.")
+    st.stop()
+
+df.columns = df.columns.astype(str).str.strip()
+
+df["TYPE"] = df["TYPE"].astype(str).str.strip()
+df["Status"] = df["Status"].astype(str).str.strip()
 
 if df.empty:
     st.warning("No rows found in the dispatch sheet.")
@@ -165,7 +189,7 @@ def show_otr_table(data: pd.DataFrame, title: str, editor_key: str):
     st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
 
     edited_data = st.data_editor(
-        data[otr_columns],
+        data[[col for col in otr_columns if col in data.columns]],
         use_container_width=True,
         hide_index=True,
         column_config={
@@ -251,6 +275,7 @@ with tabs[1]:
 
     col1, col2, col3 = st.columns([3, 2, 1])
 
+
     with col1:
         search_text = st.text_input(
             "Search OTR Imports",
@@ -270,14 +295,17 @@ with tabs[1]:
         st.write("")
         search_button = st.button("🔍 Search", key="otr_import_search_btn")
     
-    filtered_df = filter_table(df, search_text, status_filter)
+    otr_import_df = get_type_rows(df, "OTR Import")
+    filtered_df = filter_table(otr_import_df, search_text, status_filter)
     show_otr_table(filtered_df, "OTR Imports", "otr_imports_editor")
-
+    st.write("Rows found:", len(otr_import_df))
+    st.write("TYPE samples:", df["TYPE"].dropna().unique())
+   
 with tabs[2]:
     st.subheader("📤 OTR Exports")
 
     col1, col2, col3 = st.columns([3, 2, 1])
-
+    
     with col1:
         search_text = st.text_input(
             "Search OTR Exports",
@@ -297,15 +325,16 @@ with tabs[2]:
         st.write("")
         search_button = st.button("🔍 Search", key="otr_export_search_btn")
 
-    filtered_df = filter_table(df, search_text, status_filter)
+    otr_export_df = get_type_rows(df, "OTR Export")
+    filtered_df = filter_table(otr_export_df, search_text, status_filter)
     show_otr_table(filtered_df, "OTR Exports", "otr_exports_editor")
-
+    
 
 with tabs[3]:
     st.subheader("🚛 OTR Local Imports")
 
     col1, col2, col3 = st.columns([3, 2, 1])
-
+    
     with col1:
         search_text = st.text_input(
             "Search OTR Local Imports",
@@ -325,8 +354,10 @@ with tabs[3]:
         st.write("")
         search_button = st.button("🔍 Search", key="otr_local_import_search_btn")
 
-    filtered_df = filter_table(df, search_text, status_filter)
+    otr_local_import_df = get_type_rows(df, "OTR Local imports")
+    filtered_df = filter_table(otr_local_import_df, search_text, status_filter)
     show_otr_table(filtered_df, "OTR Local Imports", "otr_local_imports_editor")
+    
 
 
 with tabs[4]:
