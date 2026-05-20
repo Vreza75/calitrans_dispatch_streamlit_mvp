@@ -75,7 +75,7 @@ if df.empty:
     st.warning("No rows found in the dispatch sheet.")
     st.stop()
 
-required_columns = otr_columns = [
+otr_columns = [
     "Primary",
     "Booking Number",
     "Status",
@@ -161,73 +161,43 @@ display_columns = [
 display_columns = [col for col in display_columns if col in df.columns]
 
 
-def show_load_table(data: pd.DataFrame, title: str):
+def show_otr_table(data: pd.DataFrame, title: str, editor_key: str):
     st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
 
-    editable_columns = [
-        "Status",
-        "Driver",
-        "Truck",
-        "Dispatcher Notes",
-    ]
-
-    driver_options = [""] + sorted([str(x) for x in df["Driver"].dropna().unique() if str(x).strip()])
-
-    column_config = {
-        "_row_id": st.column_config.TextColumn("_row_id", disabled=True),
-        "Load ID": st.column_config.TextColumn("Load ID", disabled=True),
-        "Customer": st.column_config.TextColumn("Customer", disabled=True),
-        "Pickup": st.column_config.TextColumn("Pickup", disabled=True),
-        "Delivery": st.column_config.TextColumn("Delivery", disabled=True),
-        "Status": st.column_config.SelectboxColumn(
-            "Status",
-            options=[
-                "Ready to Dispatch",
-                "Assigned",
-                "En Route to Pickup",
-                "Hold/Need Info",
-                "Cancelled",
-                "Exported to ProfitTools",
-            ],
-        ),
-        "Driver": st.column_config.SelectboxColumn("Driver", options=driver_options),
-        "Truck": st.column_config.TextColumn("Truck"),
-        "Dispatcher Notes": st.column_config.TextColumn("Dispatcher Notes"),
-    }
-
     edited_data = st.data_editor(
-        data[display_columns],
+        data[otr_columns],
         use_container_width=True,
         hide_index=True,
-        disabled=[col for col in display_columns if col not in editable_columns],
-        column_config=column_config,
-        key=f"{title}_editor",
+        column_config={
+            "Status": st.column_config.SelectboxColumn(
+                "Status",
+                options=otr_status_options,
+            )
+        },
+        disabled=[col for col in otr_columns if col != "Status"],
+        key=editor_key,
         height=390,
     )
 
-    if st.button(f"💾 Save {title} Changes", key=f"{title}_save"):
+    if st.button(f"💾 Save {title} Changes", key=f"{editor_key}_save"):
         client = DispatchSmartsheetClient()
         changes_saved = 0
 
-        original = data[display_columns].reset_index(drop=True)
+        original = data[otr_columns].reset_index(drop=True)
         edited = edited_data.reset_index(drop=True)
 
         for i in range(len(edited)):
-            row_id = int(edited.loc[i, "_row_id"])
+            row_id = int(data.reset_index(drop=True).loc[i, "_row_id"])
             updates = {}
 
-            for col in editable_columns:
-                if col not in original.columns or col not in edited.columns:
-                    continue
+            old_value = original.loc[i, "Status"]
+            new_value = edited.loc[i, "Status"]
 
-                old_value = original.loc[i, col]
-                new_value = edited.loc[i, col]
+            old_value = "" if pd.isna(old_value) else old_value
+            new_value = "" if pd.isna(new_value) else new_value
 
-                old_value = "" if pd.isna(old_value) else old_value
-                new_value = "" if pd.isna(new_value) else new_value
-
-                if old_value != new_value:
-                    updates[col] = new_value
+            if old_value != new_value:
+                updates["Status"] = new_value
 
             if updates:
                 client.update_row_fields(row_id, updates)
@@ -263,7 +233,7 @@ with tabs[0]:
     with col2:
         status_filter = st.selectbox(
             "Status",
-            ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold / Need Info", "Exported"],
+            ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold/Need Info", "Exported"],
             key="dispatch_board_status"
         )
 
@@ -273,20 +243,7 @@ with tabs[0]:
         st.button("🔍 Search", key="dispatch_board_search_btn")
 
     filtered_df = filter_table(df, search_text, status_filter)
-
-    st.data_editor(
-        filtered_df[otr_columns],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-         "Status": st.column_config.SelectboxColumn(
-             "Status",
-                options=otr_status_options,
-            )
-    },
-    disabled=[col for col in otr_columns if col != "Status"],
-    key="otr_imports_editor"
-)
+    show_otr_table(filtered_df, "Dispatch Board", "dispatch_board_editor")
 
 
 with tabs[1]:
@@ -304,7 +261,7 @@ with tabs[1]:
     with col2:
         status_filter = st.selectbox(
             "Status",
-            ["All", "New", "Ready to Import", "Imported", "Needs Review", "Error", "Duplicate"],
+            ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold/Need Info", "Exported"],
             key="otr_import_status"
         )
 
@@ -314,7 +271,7 @@ with tabs[1]:
         search_button = st.button("🔍 Search", key="otr_import_search_btn")
     
     filtered_df = filter_table(df, search_text, status_filter)
-    st.dataframe(filtered_df, use_container_width=True)
+    show_otr_table(filtered_df, "OTR Imports", "otr_imports_editor")
 
 with tabs[2]:
     st.subheader("📤 OTR Exports")
@@ -331,7 +288,7 @@ with tabs[2]:
     with col2:
         status_filter = st.selectbox(
             "Status",
-            ["All", "New", "Ready to Export", "Exported", "Failed Export", "Needs Review"],
+            ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold/Need Info", "Exported"],
             key="otr_export_status"
         )
 
@@ -341,20 +298,7 @@ with tabs[2]:
         search_button = st.button("🔍 Search", key="otr_export_search_btn")
 
     filtered_df = filter_table(df, search_text, status_filter)
-
-    st.data_editor(
-        filtered_df[otr_columns],
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Status": st.column_config.SelectboxColumn(
-                "Status",
-                options=otr_status_options,
-            )
-    },
-    disabled=[col for col in otr_columns if col != "Status"],
-    key="otr_imports_editor"
-)
+    show_otr_table(filtered_df, "OTR Exports", "otr_exports_editor")
 
 
 with tabs[3]:
@@ -372,7 +316,7 @@ with tabs[3]:
     with col2:
         status_filter = st.selectbox(
             "Status",
-            ["All", "New", "Ready to Import", "Imported", "Needs Review", "Error"],
+            ["All", "New", "Ready to Dispatch", "Assigned", "Picked Up", "Delivered", "Hold/Need Info", "Exported"],
             key="otr_local_import_status"
         )
 
@@ -382,7 +326,7 @@ with tabs[3]:
         search_button = st.button("🔍 Search", key="otr_local_import_search_btn")
 
     filtered_df = filter_table(df, search_text, status_filter)
-    st.dataframe(filtered_df, use_container_width=True)
+    show_otr_table(filtered_df, "OTR Local Imports", "otr_local_imports_editor")
 
 
 with tabs[4]:
