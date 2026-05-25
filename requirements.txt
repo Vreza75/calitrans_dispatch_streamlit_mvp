@@ -3,3 +3,6 @@ pandas
 smartsheet-python-sdk
 python-dotenv
 pillow
+pdfplumber
+pytesseract
+requests

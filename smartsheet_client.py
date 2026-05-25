@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import os
+import tempfile
 from typing import Any, Dict, List
+from urllib import response
 
 import pandas as pd
 import smartsheet
@@ -19,6 +22,7 @@ class DispatchSmartsheetClient:
         self.client = smartsheet.Smartsheet(SMARTSHEET_ACCESS_TOKEN)
         self.client.errors_as_exceptions(True)
         self.sheet_id = SMARTSHEET_DISPATCH_SHEET_ID
+        self.access_token = SMARTSHEET_ACCESS_TOKEN
 
     def get_sheet(self):
         return self.client.Sheets.get_sheet(self.sheet_id)
@@ -61,3 +65,63 @@ class DispatchSmartsheetClient:
         updated_row.cells = cells
 
         self.client.Sheets.update_rows(self.sheet_id, [updated_row])
+    def attach_file_to_row(self, row_id, uploaded_file):
+        import requests
+
+        url = f"https://api.smartsheet.com/2.0/sheets/{self.sheet_id}/rows/{row_id}/attachments"
+
+        headers = {
+            "Authorization": f"Bearer {self.access_token}"
+        }
+
+        files = {
+            "file": (
+                uploaded_file.name,
+                uploaded_file.getvalue(),
+                uploaded_file.type or "application/pdf"
+            )
+        }
+
+        response = requests.post(url, headers=headers, files=files)
+
+        if response.status_code not in [200, 201]:
+            raise Exception(f"Attachment upload failed: {response.status_code} - {response.text}")
+
+        return response.json()
+
+    def add_row(self, row_data: dict):
+        sheet = self.get_sheet()
+
+        column_map = {
+            column.title: column.id
+            for column in sheet.columns
+    }
+
+        cells = []
+
+        for column_name, value in row_data.items():
+            if column_name not in column_map:
+                continue
+
+            if value is None or str(value).strip() == "":
+                continue
+
+            cells.append({
+            "columnId": column_map[column_name],
+            "value": str(value)
+        })
+
+        new_row = {
+            "toBottom": True,
+            "cells": cells
+    }
+
+        response = self.client.Sheets.add_rows(
+            self.sheet_id,
+            [new_row]
+           
+    )
+        created_row = response.result[0]
+        return created_row.id
+
+        
